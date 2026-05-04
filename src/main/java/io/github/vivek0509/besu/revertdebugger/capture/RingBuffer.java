@@ -1,0 +1,75 @@
+package io.github.vivek0509.besu.revertdebugger.capture;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Bounded FIFO store of {@link RevertRecord} entries with thread-safe access.
+ *
+ * <p>Capacity is fixed at construction. Once full, {@link #add(RevertRecord)} evicts the oldest
+ * record before inserting the new one. All public methods are {@code synchronized}; this is the
+ * simplest correct implementation given the actual write rate (the tracer adds at most a few
+ * hundred records per minute) and read rate (RPC reads at a handful per minute). Decision 10 in
+ * {@code decisions.md} covers why we did not reach for a {@code ReadWriteLock}, a lock-free
+ * structure, or a hash-index for O(1) lookup.
+ *
+ * <p>Iterators returned by {@link #recent(int)} and the result of {@link #findByTxHash(String)} are
+ * independent copies, so callers can read them after the lock has been released without worrying
+ * about concurrent modification.
+ */
+public class RingBuffer {
+
+  private final int capacity;
+  private final ArrayDeque<RevertRecord> records;
+
+  public RingBuffer(final int capacity) {
+    if (capacity <= 0) {
+      throw new IllegalArgumentException("capacity must be positive, got " + capacity);
+    }
+    this.capacity = capacity;
+    this.records = new ArrayDeque<>(capacity);
+  }
+
+  public synchronized void add(final RevertRecord record) {
+    if (records.size() >= capacity) {
+      records.removeFirst();
+    }
+    records.addLast(record);
+  }
+
+  public synchronized int size() {
+    return records.size();
+  }
+
+  /**
+   * Newest-first match for a transaction hash. Walks from the tail so recent reverts (the common
+   * operator query) return after a few iterations rather than the full {@link #size()} worst case.
+   */
+  public synchronized Optional<RevertRecord> findByTxHash(final String txHash) {
+    final Iterator<RevertRecord> it = records.descendingIterator();
+    while (it.hasNext()) {
+      final RevertRecord r = it.next();
+      if (r.txHash().equals(txHash)) {
+        return Optional.of(r);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Up to {@code limit} records, newest first. {@code limit} is clamped into {@code [0, size()]};
+   * negative values produce an empty list.
+   */
+  public synchronized List<RevertRecord> recent(final int limit) {
+    final int n = Math.min(Math.max(0, limit), records.size());
+    final List<RevertRecord> out = new ArrayList<>(n);
+    final Iterator<RevertRecord> it = records.descendingIterator();
+    while (it.hasNext() && out.size() < n) {
+      out.add(it.next());
+    }
+    return out;
+  }
+}

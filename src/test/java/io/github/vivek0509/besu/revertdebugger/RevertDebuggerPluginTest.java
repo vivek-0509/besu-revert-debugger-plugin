@@ -17,7 +17,10 @@ import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
+import java.util.function.DoubleSupplier;
+
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 class RevertDebuggerPluginTest {
 
@@ -90,6 +93,33 @@ class RevertDebuggerPluginTest {
             anyString(),
             eq("contract"),
             eq("reason_format"));
+  }
+
+  @Test
+  void startWiresBufferDepthGaugeFromTheRingBuffer() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    final MetricsSystem metricsSystem = mock(MetricsSystem.class);
+    services.addService(MetricsSystem.class, metricsSystem);
+
+    plugin.register(services);
+    plugin.start();
+
+    final ArgumentCaptor<DoubleSupplier> supplierCaptor =
+        ArgumentCaptor.forClass(DoubleSupplier.class);
+    verify(metricsSystem)
+        .createGauge(
+            eq(PluginRevertCategory.PLUGIN_REVERT),
+            eq("revert_buffer_depth"),
+            anyString(),
+            supplierCaptor.capture());
+
+    // The buffer was just constructed and is empty, so the supplier reads zero. The point
+    // of the assertion is that the supplier is the buffer's size method, not the placeholder
+    // () -> 0.0 we had in commit 5.
+    final DoubleSupplier supplier = supplierCaptor.getValue();
+    assertThat(supplier).isNotNull();
+    assertThat(supplier.getAsDouble()).isEqualTo(0.0);
   }
 
   @Test

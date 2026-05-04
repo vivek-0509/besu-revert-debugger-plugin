@@ -1,5 +1,6 @@
 package io.github.vivek0509.besu.revertdebugger;
 
+import io.github.vivek0509.besu.revertdebugger.capture.RingBuffer;
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 import io.github.vivek0509.besu.revertdebugger.metrics.RevertMetrics;
@@ -38,6 +39,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
 
   private ServiceManager serviceManager;
   private RevertDebuggerOptions options;
+  private RingBuffer ringBuffer;
   private RevertMetrics metrics;
 
   @Override
@@ -97,9 +99,8 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                         PLUGIN_NAME
                             + " requires the MetricsSystem service but it was not available"));
 
-    // Placeholder supplier until commit 7 wires the ring buffer; the gauge will report 0
-    // until the buffer is in place and ringBuffer::size is passed instead.
-    this.metrics = new RevertMetrics(metricsSystem, () -> 0.0);
+    this.ringBuffer = new RingBuffer(options.getBufferSize());
+    this.metrics = new RevertMetrics(metricsSystem, ringBuffer::size);
   }
 
   @Override
