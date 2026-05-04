@@ -1,10 +1,12 @@
 package io.github.vivek0509.besu.revertdebugger;
 
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
+import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
@@ -41,9 +43,10 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   }
 
   /**
-   * Stashes the {@link ServiceManager}, instantiates the CLI options holder, and registers it with
-   * the {@link PicoCLIOptions} service so Besu parses our four flags. Throws loudly if {@code
-   * PicoCLIOptions} is unavailable: the plugin cannot operate without parsed CLI flags.
+   * Stashes the {@link ServiceManager}, instantiates the CLI options holder, registers it with
+   * {@link PicoCLIOptions}, and registers our custom {@link PluginRevertCategory} with the {@link
+   * MetricCategoryRegistry}. Both services are required: missing either means we cannot operate, so
+   * {@code orElseThrow} is the right shape rather than a silent skip.
    */
   @Override
   public void register(final ServiceManager serviceManager) {
@@ -60,6 +63,17 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                         PLUGIN_NAME
                             + " requires the PicoCLIOptions service but it was not available"));
     picoCliOptions.addPicoCLIOptions(CLI_NAMESPACE, options);
+
+    final MetricCategoryRegistry categoryRegistry =
+        serviceManager
+            .getService(MetricCategoryRegistry.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        PLUGIN_NAME
+                            + " requires the MetricCategoryRegistry service but it was not"
+                            + " available"));
+    categoryRegistry.addMetricCategory(PluginRevertCategory.PLUGIN_REVERT);
   }
 
   @Override
