@@ -1,7 +1,10 @@
 package io.github.vivek0509.besu.revertdebugger;
 
+import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
+
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
@@ -27,7 +30,10 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(RevertDebuggerPlugin.class);
   private static final String PLUGIN_NAME = "RevertDebugger";
 
+  private static final String CLI_NAMESPACE = "plugin-revert";
+
   private ServiceManager serviceManager;
+  private RevertDebuggerOptions options;
 
   @Override
   public String getName() {
@@ -35,14 +41,25 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   }
 
   /**
-   * Stashes the {@link ServiceManager} for later use. The {@link BesuPlugin} contract states this
-   * is the only call that hands the manager to us, so we must hold onto it here for {@link
-   * #start()} and the other lifecycle methods to consume.
+   * Stashes the {@link ServiceManager}, instantiates the CLI options holder, and registers it with
+   * the {@link PicoCLIOptions} service so Besu parses our four flags. Throws loudly if {@code
+   * PicoCLIOptions} is unavailable: the plugin cannot operate without parsed CLI flags.
    */
   @Override
   public void register(final ServiceManager serviceManager) {
     LOG.info("{} registering", PLUGIN_NAME);
     this.serviceManager = serviceManager;
+    this.options = new RevertDebuggerOptions();
+
+    final PicoCLIOptions picoCliOptions =
+        serviceManager
+            .getService(PicoCLIOptions.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        PLUGIN_NAME
+                            + " requires the PicoCLIOptions service but it was not available"));
+    picoCliOptions.addPicoCLIOptions(CLI_NAMESPACE, options);
   }
 
   @Override
