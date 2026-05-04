@@ -2,9 +2,11 @@ package io.github.vivek0509.besu.revertdebugger;
 
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
+import io.github.vivek0509.besu.revertdebugger.metrics.RevertMetrics;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
@@ -36,6 +38,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
 
   private ServiceManager serviceManager;
   private RevertDebuggerOptions options;
+  private RevertMetrics metrics;
 
   @Override
   public String getName() {
@@ -84,6 +87,19 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   @Override
   public void start() {
     LOG.info("{} starting", PLUGIN_NAME);
+
+    final MetricsSystem metricsSystem =
+        serviceManager
+            .getService(MetricsSystem.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        PLUGIN_NAME
+                            + " requires the MetricsSystem service but it was not available"));
+
+    // Placeholder supplier until commit 7 wires the ring buffer; the gauge will report 0
+    // until the buffer is in place and ringBuffer::size is passed instead.
+    this.metrics = new RevertMetrics(metricsSystem, () -> 0.0);
   }
 
   @Override

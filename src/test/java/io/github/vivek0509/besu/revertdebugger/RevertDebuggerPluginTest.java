@@ -3,11 +3,16 @@ package io.github.vivek0509.besu.revertdebugger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
@@ -24,10 +29,9 @@ class RevertDebuggerPluginTest {
   @Test
   void registerWiresPicoCLIOptionsUnderPluginRevertNamespace() {
     final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
-    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
     final RecordingPicoCLIOptions picoCli = new RecordingPicoCLIOptions();
     services.addService(PicoCLIOptions.class, picoCli);
-    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
 
     plugin.register(services);
 
@@ -70,11 +74,40 @@ class RevertDebuggerPluginTest {
   }
 
   @Test
+  void startCreatesRevertMetricsAgainstMetricsSystem() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    final MetricsSystem metricsSystem = mock(MetricsSystem.class);
+    services.addService(MetricsSystem.class, metricsSystem);
+
+    plugin.register(services);
+    plugin.start();
+
+    verify(metricsSystem)
+        .createLabelledCounter(
+            eq(PluginRevertCategory.PLUGIN_REVERT),
+            eq("revert_count_total"),
+            anyString(),
+            eq("contract"),
+            eq("reason_format"));
+  }
+
+  @Test
+  void startWithoutMetricsSystemServiceFailsLoudly() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    plugin.register(services);
+
+    assertThatThrownBy(plugin::start)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("MetricsSystem");
+  }
+
+  @Test
   void fullLifecycleSequenceCompletesWithoutThrowing() {
     final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
-    final ServiceManager services = new ServiceManager.SimpleServiceManager();
-    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
-    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    services.addService(MetricsSystem.class, mock(MetricsSystem.class));
 
     assertThatCode(
             () -> {
@@ -85,6 +118,13 @@ class RevertDebuggerPluginTest {
               plugin.stop();
             })
         .doesNotThrowAnyException();
+  }
+
+  private static ServiceManager serviceManagerWithRegisterFakes() {
+    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
+    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    return services;
   }
 
   private static final class RecordingPicoCLIOptions implements PicoCLIOptions {
