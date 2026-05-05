@@ -120,6 +120,23 @@ class RevertDebuggerPluginTest {
   }
 
   @Test
+  void registerWiresRevertStatsUnderRevertNamespace() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
+    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    final RecordingRpcEndpointService rpc = new RecordingRpcEndpointService();
+    services.addService(RpcEndpointService.class, rpc);
+
+    plugin.register(services);
+
+    final RecordingRpcEndpointService.Registration stats =
+        rpc.findRegistration("stats").orElseThrow();
+    assertThat(stats.namespace()).isEqualTo("revert");
+    assertThat(stats.function()).isNotNull();
+  }
+
+  @Test
   void registerWithoutRpcEndpointServiceFailsLoudly() {
     final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
     final ServiceManager services = new ServiceManager.SimpleServiceManager();
