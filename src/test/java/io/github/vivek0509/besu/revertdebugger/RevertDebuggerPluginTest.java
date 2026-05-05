@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcResponse;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
@@ -217,6 +218,43 @@ class RevertDebuggerPluginTest {
     assertThatThrownBy(plugin::start)
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("MetricsSystem");
+  }
+
+  @Test
+  void reloadConfigurationPropagatesAllowListToProvider() throws Exception {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    services.addService(MetricsSystem.class, mock(MetricsSystem.class));
+    plugin.register(services);
+    plugin.start();
+
+    final RevertTracerProvider provider =
+        (RevertTracerProvider) services.getService(BlockImportTracerProvider.class).orElseThrow();
+    assertThat(provider.getContractAllowList()).isEmpty();
+
+    // Stand in for a future external mechanism (config file, env var, admin RPC) that would
+    // mutate the option holder's contract list. v0 has no such mechanism; we simulate it via
+    // reflection so the reload path is exercised end to end.
+    final Field optionsField = RevertDebuggerPlugin.class.getDeclaredField("options");
+    optionsField.setAccessible(true);
+    final RevertDebuggerOptions options = (RevertDebuggerOptions) optionsField.get(plugin);
+    final Field contractsField = RevertDebuggerOptions.class.getDeclaredField("contracts");
+    contractsField.setAccessible(true);
+    contractsField.set(options, List.of("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"));
+
+    plugin.reloadConfiguration().get();
+
+    assertThat(provider.getContractAllowList())
+        .containsExactly("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef");
+  }
+
+  @Test
+  void reloadConfigurationBeforeStartIsSafe() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    plugin.register(services);
+
+    assertThatCode(() -> plugin.reloadConfiguration().get()).doesNotThrowAnyException();
   }
 
   @Test

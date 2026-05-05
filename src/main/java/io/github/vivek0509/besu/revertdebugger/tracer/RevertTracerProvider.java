@@ -54,9 +54,18 @@ public class RevertTracerProvider implements BlockImportTracerProvider {
     return new RevertTracer(blockHeader, ringBuffer, metrics, contractAllowList::get);
   }
 
-  /** Hot-reload entry point used by commit 14. Replaces the allow-list atomically. */
+  /** Hot-reload entry point. Replaces the allow-list atomically. */
   public void setContractAllowList(final List<String> contracts) {
     contractAllowList.set(normalize(contracts));
+  }
+
+  /**
+   * Returns the current allow-list. Exposed for tests verifying hot-reload swaps and for any future
+   * observability code that wants to inspect the live filter without going through a tracer
+   * instance.
+   */
+  public Set<String> getContractAllowList() {
+    return contractAllowList.get();
   }
 
   private static Set<String> normalize(final List<String> contracts) {

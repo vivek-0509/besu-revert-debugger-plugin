@@ -67,12 +67,28 @@ class RevertTracerProviderTest {
             mock(RevertMetrics.class),
             options(true, List.of("0xAaBbCcDdEeFfAaBbCcDdEeFfAaBbCcDdEeFfAaBb")));
 
-    // Replace via the hot-reload entry point to confirm normalisation also happens there.
-    provider.setContractAllowList(List.of("0xCAFEBABEcafebabecafebabecafebabecafebabe"));
+    assertThat(provider.getContractAllowList())
+        .containsExactly("0xaabbccddeeffaabbccddeeffaabbccddeeffaabb");
+  }
 
-    // We cannot read the AtomicReference directly from the test, but the lowercasing contract is
-    // exercised through the tracer in RevertTracerTest's allow-list cases. This test serves as a
-    // smoke test that constructor and setter accept mixed-case input without throwing.
-    assertThat(provider).isNotNull();
+  @Test
+  void setContractAllowListSwapsAtomically() {
+    final RevertTracerProvider provider =
+        new RevertTracerProvider(
+            new RingBuffer(10),
+            mock(RevertMetrics.class),
+            options(true, List.of("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    assertThat(provider.getContractAllowList())
+        .containsExactly("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+    provider.setContractAllowList(
+        List.of(
+            "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "0xcccccccccccccccccccccccccccccccccccccccc"));
+
+    assertThat(provider.getContractAllowList())
+        .containsExactlyInAnyOrder(
+            "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "0xcccccccccccccccccccccccccccccccccccccccc");
   }
 }
