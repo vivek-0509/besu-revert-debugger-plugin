@@ -22,6 +22,8 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 
@@ -94,9 +96,27 @@ class RevertDebuggerPluginTest {
 
     plugin.register(services);
 
-    assertThat(rpc.namespace).isEqualTo("revert");
-    assertThat(rpc.functionName).isEqualTo("inspect");
-    assertThat(rpc.function).isNotNull();
+    final RecordingRpcEndpointService.Registration inspect =
+        rpc.findRegistration("inspect").orElseThrow();
+    assertThat(inspect.namespace()).isEqualTo("revert");
+    assertThat(inspect.function()).isNotNull();
+  }
+
+  @Test
+  void registerWiresRevertRecentUnderRevertNamespace() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
+    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    final RecordingRpcEndpointService rpc = new RecordingRpcEndpointService();
+    services.addService(RpcEndpointService.class, rpc);
+
+    plugin.register(services);
+
+    final RecordingRpcEndpointService.Registration recent =
+        rpc.findRegistration("recent").orElseThrow();
+    assertThat(recent.namespace()).isEqualTo("revert");
+    assertThat(recent.function()).isNotNull();
   }
 
   @Test
@@ -233,23 +253,26 @@ class RevertDebuggerPluginTest {
   }
 
   private static final class RecordingRpcEndpointService implements RpcEndpointService {
-    String namespace;
-    String functionName;
-    Function<PluginRpcRequest, ?> function;
+    final List<Registration> registrations = new ArrayList<>();
 
     @Override
     public <T> void registerRPCEndpoint(
         final String namespace,
         final String functionName,
         final Function<PluginRpcRequest, T> function) {
-      this.namespace = namespace;
-      this.functionName = functionName;
-      this.function = function;
+      registrations.add(new Registration(namespace, functionName, function));
     }
 
     @Override
     public PluginRpcResponse call(final String methodName, final Object[] params) {
       return null;
     }
+
+    java.util.Optional<Registration> findRegistration(final String functionName) {
+      return registrations.stream().filter(r -> r.functionName().equals(functionName)).findFirst();
+    }
+
+    record Registration(
+        String namespace, String functionName, Function<PluginRpcRequest, ?> function) {}
   }
 }

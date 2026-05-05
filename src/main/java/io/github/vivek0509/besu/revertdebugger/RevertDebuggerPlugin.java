@@ -5,6 +5,7 @@ import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 import io.github.vivek0509.besu.revertdebugger.metrics.RevertMetrics;
 import io.github.vivek0509.besu.revertdebugger.rpc.RevertInspectMethod;
+import io.github.vivek0509.besu.revertdebugger.rpc.RevertRecentMethod;
 import io.github.vivek0509.besu.revertdebugger.tracer.RevertTracerProvider;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -95,6 +96,8 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                         PLUGIN_NAME + " requires the RpcEndpointService but it was not available"));
     rpcEndpointService.registerRPCEndpoint(
         RPC_NAMESPACE, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
+    rpcEndpointService.registerRPCEndpoint(
+        RPC_NAMESPACE, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
   }
 
   @Override
