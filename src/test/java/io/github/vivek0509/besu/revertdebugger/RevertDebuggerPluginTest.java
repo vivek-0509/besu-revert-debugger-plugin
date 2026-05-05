@@ -10,8 +10,10 @@ import static org.mockito.Mockito.verify;
 
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
+import io.github.vivek0509.besu.revertdebugger.tracer.RevertTracerProvider;
 
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
@@ -120,6 +122,20 @@ class RevertDebuggerPluginTest {
     final DoubleSupplier supplier = supplierCaptor.getValue();
     assertThat(supplier).isNotNull();
     assertThat(supplier.getAsDouble()).isEqualTo(0.0);
+  }
+
+  @Test
+  void startRegistersBlockImportTracerProviderOnTheServiceManager() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = serviceManagerWithRegisterFakes();
+    services.addService(MetricsSystem.class, mock(MetricsSystem.class));
+
+    plugin.register(services);
+    plugin.start();
+
+    assertThat(services.getService(BlockImportTracerProvider.class)).isPresent();
+    assertThat(services.getService(BlockImportTracerProvider.class).get())
+        .isInstanceOf(RevertTracerProvider.class);
   }
 
   @Test

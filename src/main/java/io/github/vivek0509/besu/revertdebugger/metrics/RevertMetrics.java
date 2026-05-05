@@ -1,5 +1,7 @@
 package io.github.vivek0509.besu.revertdebugger.metrics;
 
+import io.github.vivek0509.besu.revertdebugger.decode.RevertReasonFormat;
+
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.Histogram;
@@ -68,5 +70,21 @@ public class RevertMetrics {
 
   public Histogram captureOverhead() {
     return captureOverhead;
+  }
+
+  /**
+   * Records a single captured revert: increments {@code revert_count_total} labelled with the
+   * contract and reason format, and adds {@code gasUsed} to {@code revert_gas_used_total} labelled
+   * with the contract.
+   */
+  public void recordRevert(
+      final String contract, final RevertReasonFormat format, final long gasUsed) {
+    revertCount.labels(contract, format.displayName()).inc();
+    revertGasUsed.labels(contract).inc(gasUsed);
+  }
+
+  /** Records the wall-clock time the tracer spent assembling one record, in seconds. */
+  public void recordCaptureOverheadSeconds(final double seconds) {
+    captureOverhead.observe(seconds);
   }
 }

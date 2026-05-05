@@ -4,9 +4,11 @@ import io.github.vivek0509.besu.revertdebugger.capture.RingBuffer;
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 import io.github.vivek0509.besu.revertdebugger.metrics.RevertMetrics;
+import io.github.vivek0509.besu.revertdebugger.tracer.RevertTracerProvider;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
@@ -41,6 +43,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   private RevertDebuggerOptions options;
   private RingBuffer ringBuffer;
   private RevertMetrics metrics;
+  private RevertTracerProvider tracerProvider;
 
   @Override
   public String getName() {
@@ -101,6 +104,8 @@ public class RevertDebuggerPlugin implements BesuPlugin {
 
     this.ringBuffer = new RingBuffer(options.getBufferSize());
     this.metrics = new RevertMetrics(metricsSystem, ringBuffer::size);
+    this.tracerProvider = new RevertTracerProvider(ringBuffer, metrics, options);
+    serviceManager.addService(BlockImportTracerProvider.class, tracerProvider);
   }
 
   @Override
