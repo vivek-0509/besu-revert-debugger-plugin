@@ -39,7 +39,7 @@ class RevertDebuggerPluginTest {
   }
 
   @Test
-  void registerWiresPicoCLIOptionsUnderPluginRevertNamespace() {
+  void registerWiresPicoCLIOptionsUnderRevertNamespace() {
     final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
     final ServiceManager services = serviceManagerWithRegisterFakes();
     final RecordingPicoCLIOptions picoCli = new RecordingPicoCLIOptions();
@@ -47,7 +47,7 @@ class RevertDebuggerPluginTest {
 
     plugin.register(services);
 
-    assertThat(picoCli.namespace).isEqualTo("plugin-revert");
+    assertThat(picoCli.namespace).isEqualTo("revert");
     assertThat(picoCli.holder).isInstanceOf(RevertDebuggerOptions.class);
   }
 

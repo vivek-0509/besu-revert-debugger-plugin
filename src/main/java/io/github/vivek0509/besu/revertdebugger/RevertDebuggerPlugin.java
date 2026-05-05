@@ -43,7 +43,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(RevertDebuggerPlugin.class);
   private static final String PLUGIN_NAME = "RevertDebugger";
 
-  private static final String CLI_NAMESPACE = "plugin-revert";
+  private static final String CLI_NAMESPACE = "revert";
   private static final String RPC_NAMESPACE = "revert";
 
   private ServiceManager serviceManager;

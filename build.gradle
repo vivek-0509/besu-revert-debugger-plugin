@@ -7,7 +7,7 @@ group = 'io.github.vivek0509'
 version = '0.1.0'
 
 besuPlugin {
-    besuVersion = '26.5.0'
+    besuVersion = '26.4.0'
 }
 
 java {
