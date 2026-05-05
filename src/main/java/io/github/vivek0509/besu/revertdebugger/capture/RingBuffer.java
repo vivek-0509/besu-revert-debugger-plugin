@@ -33,11 +33,24 @@ public class RingBuffer {
     this.records = new ArrayDeque<>(capacity);
   }
 
-  public synchronized void add(final RevertRecord record) {
+  /**
+   * Adds the record unless one with the same {@code txHash} is already present. Returns {@code
+   * true} if the record was added, {@code false} if dropped as a duplicate. Some Besu consensus
+   * paths invoke the per-block tracer's end-of-tx hook more than once per transaction, sometimes
+   * across separate tracer instances; deduping at the buffer is the only way to catch the
+   * cross-instance case.
+   */
+  public synchronized boolean add(final RevertRecord record) {
+    for (final RevertRecord existing : records) {
+      if (existing.txHash().equals(record.txHash())) {
+        return false;
+      }
+    }
     if (records.size() >= capacity) {
       records.removeFirst();
     }
     records.addLast(record);
+    return true;
   }
 
   public synchronized int size() {

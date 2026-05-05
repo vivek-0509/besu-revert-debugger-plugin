@@ -14,6 +14,7 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -31,11 +32,18 @@ import org.apache.tuweni.bytes.Bytes;
  *   <li>{@link #traceContextExit(MessageFrame)} fires for every call frame as it exits. The first
  *       exit with {@code state == REVERT} is the deepest revert site (in a bubble chain, inner
  *       frames exit before outer ones). We record its depth and recipient address there.
- *   <li>{@link #traceEndTransaction} sees the final transaction state. If {@code status == false}
- *       and {@code output} is non-empty, this is a revert: we decode the output, build the {@link
- *       RevertRecord} using the captured depth and contract, push to the buffer, and update
- *       metrics.
+ *   <li>{@link #traceEndTransaction} captures every failed transaction ({@code status == false}).
+ *       The output is decoded (empty bytes decode to {@code UNKNOWN}, which is how bare {@code
+ *       revert()} calls and other non-Solidity-revert failures appear), the {@link RevertRecord} is
+ *       built using the captured depth and contract when {@link #traceContextExit} fired and {@code
+ *       tx.getTo()} as a fallback otherwise, and metrics are updated.
  * </ol>
+ *
+ * <p>Two layers of dedup protect against Besu calling end-of-tx more than once per transaction.
+ * Some consensus paths (observed in QBFT block import) invoke the hook twice on the same tracer
+ * instance; the {@code capturedTxHashes} set catches that. Some paths instantiate two separate
+ * tracers per block; the ring buffer's own txHash check (see {@link RingBuffer#add}) catches the
+ * cross-instance case.
  *
  * <p>The {@code --plugin-revert-capture-depth} flag is parsed but does not yet alter behaviour; the
  * tracer always uses the same standard-equivalent capture path regardless of the flag value.
@@ -48,6 +56,7 @@ public class RevertTracer implements BlockAwareOperationTracer {
   private final RingBuffer ringBuffer;
   private final RevertMetrics metrics;
   private final Supplier<Set<String>> contractAllowListSupplier;
+  private final Set<String> capturedTxHashes = new HashSet<>();
 
   private int revertDepth = UNCAPTURED;
   private String revertContract;
@@ -88,17 +97,23 @@ public class RevertTracer implements BlockAwareOperationTracer {
       final Set<Address> selfDestructs,
       final long timeNs) {
 
-    if (status || output == null || output.isEmpty()) {
+    if (status) {
+      return;
+    }
+
+    final String txHash = tx.getHash().toHexString();
+    if (!capturedTxHashes.add(txHash)) {
       return;
     }
 
     final long captureStartNanos = System.nanoTime();
 
-    final Decoded decoded = RevertReasonDecoder.decode(output);
+    final Bytes revertBytes = output != null ? output : Bytes.EMPTY;
+    final Decoded decoded = RevertReasonDecoder.decode(revertBytes);
 
     final String contract =
         revertContract != null ? revertContract : tx.getTo().map(Address::toHexString).orElse("0x");
-    final int callDepth = revertDepth == UNCAPTURED ? 0 : revertDepth;
+    final int callDepth = revertDepth != UNCAPTURED ? revertDepth : 0;
 
     final Set<String> allowList = contractAllowListSupplier.get();
     if (!allowList.isEmpty() && !allowList.contains(contract)) {
@@ -110,7 +125,7 @@ public class RevertTracer implements BlockAwareOperationTracer {
 
     final RevertRecord record =
         new RevertRecord(
-            tx.getHash().toHexString(),
+            txHash,
             blockHeader.getNumber(),
             blockHeader.getBlockHash().toHexString(),
             contract,
@@ -119,12 +134,14 @@ public class RevertTracer implements BlockAwareOperationTracer {
             payload.toHexString(),
             decoded.format(),
             decoded.reason(),
-            output.toHexString(),
+            revertBytes.toHexString(),
             gasUsed,
             callDepth,
             blockHeader.getTimestamp());
 
-    ringBuffer.add(record);
+    if (!ringBuffer.add(record)) {
+      return;
+    }
     metrics.recordRevert(contract, decoded.format(), gasUsed);
     metrics.recordCaptureOverheadSeconds((System.nanoTime() - captureStartNanos) / 1e9);
   }

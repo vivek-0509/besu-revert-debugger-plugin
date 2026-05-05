@@ -140,12 +140,42 @@ class RevertTracerTest {
   }
 
   @Test
-  void failedTransactionWithEmptyOutputIsNotCaptured() {
+  void bareRevertWithEmptyOutputIsCapturedAsUnknown() {
     final Transaction tx = transaction(TX_HASH, CONTRACT, Bytes.fromHexString("0x12345678"));
     tracer.traceStartTransaction(null, tx);
     traceEnd(tx, false, Bytes.EMPTY, 21_000L);
 
-    assertThat(buffer.size()).isZero();
+    final RevertRecord record = buffer.findByTxHash(TX_HASH.toHexString()).orElseThrow();
+    assertThat(record.reasonFormat()).isEqualTo(RevertReasonFormat.UNKNOWN);
+    assertThat(record.decodedReason()).isNull();
+    assertThat(record.rawRevertBytes()).isEqualTo("0x");
+  }
+
+  @Test
+  void revertedTransactionWithoutContextExitIsStillCapturedFromOutput() {
+    final Transaction tx = transaction(TX_HASH, CONTRACT, Bytes.fromHexString("0x12345678"));
+    tracer.traceStartTransaction(null, tx);
+    traceEnd(tx, false, ERROR_INSUFFICIENT_BALANCE, 21_000L);
+
+    final RevertRecord record = buffer.findByTxHash(TX_HASH.toHexString()).orElseThrow();
+    assertThat(record.reasonFormat()).isEqualTo(RevertReasonFormat.ERROR_STRING);
+    assertThat(record.decodedReason()).isEqualTo("Insufficient balance");
+    assertThat(record.contract()).isEqualTo(CONTRACT.toHexString());
+    assertThat(record.callDepth()).isZero();
+  }
+
+  @Test
+  void duplicateTraceEndTransactionForSameTxIsCapturedOnce() {
+    final Transaction tx = transaction(TX_HASH, CONTRACT, Bytes.fromHexString("0x12345678"));
+    tracer.traceStartTransaction(null, tx);
+    tracer.traceContextExit(frameAt(0, MessageFrame.State.REVERT, CONTRACT));
+    traceEnd(tx, false, ERROR_INSUFFICIENT_BALANCE, 21_000L);
+
+    tracer.traceStartTransaction(null, tx);
+    tracer.traceContextExit(frameAt(0, MessageFrame.State.REVERT, CONTRACT));
+    traceEnd(tx, false, ERROR_INSUFFICIENT_BALANCE, 21_000L);
+
+    assertThat(buffer.size()).isOne();
   }
 
   @Test

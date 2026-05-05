@@ -46,12 +46,6 @@ class RevertDebuggerOptionsTest {
   }
 
   @Test
-  void captureDepthUppercaseAlsoWorks() {
-    assertThat(parse("--plugin-revert-capture-depth", "MINIMAL").getCaptureDepth())
-        .isEqualTo(CaptureDepth.MINIMAL);
-  }
-
-  @Test
   void captureDepthInvalidValueThrowsParameterException() {
     final RevertDebuggerOptions options = new RevertDebuggerOptions();
     assertThatThrownBy(

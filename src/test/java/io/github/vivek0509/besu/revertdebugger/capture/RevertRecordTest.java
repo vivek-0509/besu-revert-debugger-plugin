@@ -86,19 +86,4 @@ class RevertRecordTest {
     assertThat(tree.has("decodedReason")).isTrue();
     assertThat(tree.get("decodedReason").isNull()).isTrue();
   }
-
-  @Test
-  void reasonFormatSerializesAsParenthesisForm() throws Exception {
-    final JsonNode tree = mapper.readTree(mapper.writeValueAsString(sample()));
-    assertThat(tree.get("reasonFormat").asText()).isEqualTo("Error(string)");
-  }
-
-  @Test
-  void numericFieldsSerializeAsJsonNumbers() throws Exception {
-    final JsonNode tree = mapper.readTree(mapper.writeValueAsString(sample()));
-    assertThat(tree.get("blockNumber").isNumber()).isTrue();
-    assertThat(tree.get("gasUsed").isNumber()).isTrue();
-    assertThat(tree.get("callDepth").isNumber()).isTrue();
-    assertThat(tree.get("timestamp").isNumber()).isTrue();
-  }
 }

@@ -140,9 +140,9 @@ Custom errors and bare `revert()` calls are tagged `Unknown` with `rawRevertByte
 
 Six services from `org.hyperledger.besu.plugin.services`:
 
-- `BlockImportTracerProvider` — registered via `ServiceManager.addService`. The plugin's tracer becomes Besu's default block-import tracer.
-- `RpcEndpointService` — used during `register()` to wire the three `revert_*` methods.
-- `MetricsSystem` — used during `start()` to create the four metric handles.
-- `MetricCategoryRegistry` — used during `register()` to register the `PLUGIN_REVERT` category.
-- `PicoCLIOptions` — used during `register()` to add the four CLI flags.
-- `BesuConfiguration` — currently not consumed in v0; reserved for future use (e.g. resolving the data-directory location).
+- `BlockImportTracerProvider`: registered via `ServiceManager.addService`. The plugin's tracer becomes Besu's default block-import tracer.
+- `RpcEndpointService`: used during `register()` to wire the three `revert_*` methods.
+- `MetricsSystem`: used during `start()` to create the four metric handles.
+- `MetricCategoryRegistry`: used during `register()` to register the `PLUGIN_REVERT` category.
+- `PicoCLIOptions`: used during `register()` to add the four CLI flags.
+- `BesuConfiguration`: currently not consumed in v0; reserved for future use (e.g. resolving the data-directory location).

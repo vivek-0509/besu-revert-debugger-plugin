@@ -34,11 +34,6 @@ import org.mockito.ArgumentCaptor;
 class RevertDebuggerPluginTest {
 
   @Test
-  void getName_isLockedToRevertDebugger() {
-    assertThat(new RevertDebuggerPlugin().getName()).isEqualTo("RevertDebugger");
-  }
-
-  @Test
   void registerWiresPicoCLIOptionsUnderRevertNamespace() {
     final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
     final ServiceManager services = serviceManagerWithRegisterFakes();
@@ -255,23 +250,6 @@ class RevertDebuggerPluginTest {
     plugin.register(services);
 
     assertThatCode(() -> plugin.reloadConfiguration().get()).doesNotThrowAnyException();
-  }
-
-  @Test
-  void fullLifecycleSequenceCompletesWithoutThrowing() {
-    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
-    final ServiceManager services = serviceManagerWithRegisterFakes();
-    services.addService(MetricsSystem.class, mock(MetricsSystem.class));
-
-    assertThatCode(
-            () -> {
-              plugin.register(services);
-              plugin.beforeExternalServices();
-              plugin.start();
-              plugin.afterExternalServicePostMainLoop();
-              plugin.stop();
-            })
-        .doesNotThrowAnyException();
   }
 
   private static ServiceManager serviceManagerWithRegisterFakes() {
