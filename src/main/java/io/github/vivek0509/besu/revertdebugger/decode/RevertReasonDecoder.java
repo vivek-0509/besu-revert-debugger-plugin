@@ -17,8 +17,9 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * <p>Anything else, including custom errors and bare {@code revert()} calls, is tagged {@link
  * RevertReasonFormat#UNKNOWN}; the raw bytes survive elsewhere on the {@code RevertRecord} for
- * downstream tooling. The decoder never throws: malformed inputs map to {@code UNKNOWN} too.
- * Decision 11 in {@code decisions.md} covers why.
+ * downstream tooling. The decoder never throws: malformed inputs map to {@code UNKNOWN} too,
+ * because this method runs on the block-import hot path and exceptions would just push the recovery
+ * decision into the caller without changing what the wire output looks like.
  */
 public final class RevertReasonDecoder {
 

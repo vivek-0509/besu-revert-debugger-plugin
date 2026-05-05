@@ -4,6 +4,7 @@ import io.github.vivek0509.besu.revertdebugger.capture.RingBuffer;
 import io.github.vivek0509.besu.revertdebugger.cli.RevertDebuggerOptions;
 import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 import io.github.vivek0509.besu.revertdebugger.metrics.RevertMetrics;
+import io.github.vivek0509.besu.revertdebugger.rpc.RevertInspectMethod;
 import io.github.vivek0509.besu.revertdebugger.tracer.RevertTracerProvider;
 
 import org.hyperledger.besu.plugin.BesuPlugin;
@@ -11,6 +12,7 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
 import com.google.auto.service.AutoService;
@@ -38,6 +40,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   private static final String PLUGIN_NAME = "RevertDebugger";
 
   private static final String CLI_NAMESPACE = "plugin-revert";
+  private static final String RPC_NAMESPACE = "revert";
 
   private ServiceManager serviceManager;
   private RevertDebuggerOptions options;
@@ -82,6 +85,16 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                             + " requires the MetricCategoryRegistry service but it was not"
                             + " available"));
     categoryRegistry.addMetricCategory(PluginRevertCategory.PLUGIN_REVERT);
+
+    final RpcEndpointService rpcEndpointService =
+        serviceManager
+            .getService(RpcEndpointService.class)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        PLUGIN_NAME + " requires the RpcEndpointService but it was not available"));
+    rpcEndpointService.registerRPCEndpoint(
+        RPC_NAMESPACE, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
   }
 
   @Override

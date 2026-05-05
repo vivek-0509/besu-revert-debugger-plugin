@@ -12,9 +12,9 @@ import java.util.Optional;
  * <p>Capacity is fixed at construction. Once full, {@link #add(RevertRecord)} evicts the oldest
  * record before inserting the new one. All public methods are {@code synchronized}; this is the
  * simplest correct implementation given the actual write rate (the tracer adds at most a few
- * hundred records per minute) and read rate (RPC reads at a handful per minute). Decision 10 in
- * {@code decisions.md} covers why we did not reach for a {@code ReadWriteLock}, a lock-free
- * structure, or a hash-index for O(1) lookup.
+ * hundred records per minute) and read rate (RPC reads at a handful per minute). A {@link
+ * java.util.concurrent.locks.ReadWriteLock} or hash-index for O(1) lookup is not justified at these
+ * rates and would expand the concurrency surface.
  *
  * <p>Iterators returned by {@link #recent(int)} and the result of {@link #findByTxHash(String)} are
  * independent copies, so callers can read them after the lock has been released without worrying

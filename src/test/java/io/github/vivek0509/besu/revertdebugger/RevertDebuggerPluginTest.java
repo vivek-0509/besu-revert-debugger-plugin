@@ -16,10 +16,14 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
+import org.hyperledger.besu.plugin.services.rpc.PluginRpcResponse;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -51,6 +55,7 @@ class RevertDebuggerPluginTest {
     services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
     final RecordingMetricCategoryRegistry registry = new RecordingMetricCategoryRegistry();
     services.addService(MetricCategoryRegistry.class, registry);
+    services.addService(RpcEndpointService.class, new RecordingRpcEndpointService());
 
     plugin.register(services);
 
@@ -76,6 +81,34 @@ class RevertDebuggerPluginTest {
     assertThatThrownBy(() -> plugin.register(services))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("MetricCategoryRegistry");
+  }
+
+  @Test
+  void registerWiresRevertInspectUnderRevertNamespace() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
+    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    final RecordingRpcEndpointService rpc = new RecordingRpcEndpointService();
+    services.addService(RpcEndpointService.class, rpc);
+
+    plugin.register(services);
+
+    assertThat(rpc.namespace).isEqualTo("revert");
+    assertThat(rpc.functionName).isEqualTo("inspect");
+    assertThat(rpc.function).isNotNull();
+  }
+
+  @Test
+  void registerWithoutRpcEndpointServiceFailsLoudly() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
+    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+
+    assertThatThrownBy(() -> plugin.register(services))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("RpcEndpointService");
   }
 
   @Test
@@ -170,6 +203,7 @@ class RevertDebuggerPluginTest {
     final ServiceManager services = new ServiceManager.SimpleServiceManager();
     services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
     services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    services.addService(RpcEndpointService.class, new RecordingRpcEndpointService());
     return services;
   }
 
@@ -195,6 +229,27 @@ class RevertDebuggerPluginTest {
     @Override
     public boolean isMetricCategoryEnabled(final MetricCategory metricCategory) {
       return true;
+    }
+  }
+
+  private static final class RecordingRpcEndpointService implements RpcEndpointService {
+    String namespace;
+    String functionName;
+    Function<PluginRpcRequest, ?> function;
+
+    @Override
+    public <T> void registerRPCEndpoint(
+        final String namespace,
+        final String functionName,
+        final Function<PluginRpcRequest, T> function) {
+      this.namespace = namespace;
+      this.functionName = functionName;
+      this.function = function;
+    }
+
+    @Override
+    public PluginRpcResponse call(final String methodName, final Object[] params) {
+      return null;
     }
   }
 }

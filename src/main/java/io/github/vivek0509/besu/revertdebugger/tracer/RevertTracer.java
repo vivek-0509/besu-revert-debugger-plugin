@@ -37,8 +37,8 @@ import org.apache.tuweni.bytes.Bytes;
  *       metrics.
  * </ol>
  *
- * <p>The {@code --plugin-revert-capture-depth} flag is parsed but does not yet alter behaviour.
- * Decision 13 in {@code decisions.md} covers why.
+ * <p>The {@code --plugin-revert-capture-depth} flag is parsed but does not yet alter behaviour; the
+ * tracer always uses the same standard-equivalent capture path regardless of the flag value.
  */
 public class RevertTracer implements BlockAwareOperationTracer {
 

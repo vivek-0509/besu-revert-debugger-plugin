@@ -4,7 +4,7 @@ A Hyperledger Besu plugin that captures EVM transaction reverts during block imp
 
 ## Status
 
-Early development. CLI flags, JSON-RPC methods, and metric names are documented in `DESIGN.md` as they are added.
+Early development. CLI flags, JSON-RPC methods, and metric names are documented in this README as they are added.
 
 ## Build
 

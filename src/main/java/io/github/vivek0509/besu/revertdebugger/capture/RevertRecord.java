@@ -8,9 +8,9 @@ import io.github.vivek0509.besu.revertdebugger.decode.RevertReasonFormat;
  * directly.
  *
  * <p>Hex-encoded fields are typed as {@link String} rather than Besu's {@code Hash} or {@code
- * Address}: the producer (the tracer in commit 9) converts at capture time, and consumers (the
- * JSON-RPC methods) want hex strings on the wire anyway. Decision 8 in {@code decisions.md} covers
- * the trade-off.
+ * Address}: the producer (the tracer) converts at capture time, and consumers (the JSON-RPC
+ * methods) want hex strings on the wire anyway. Keeping the data class plugin-api-free also means
+ * Jackson needs no custom serializers.
  *
  * <p>{@code decodedReason} is nullable: it carries a human-readable string when {@code
  * reasonFormat} is {@link RevertReasonFormat#ERROR_STRING} or {@link
