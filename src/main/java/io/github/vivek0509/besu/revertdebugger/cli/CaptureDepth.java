@@ -5,17 +5,18 @@ import java.util.Locale;
 import picocli.CommandLine.ITypeConverter;
 
 /**
- * Tracer capture depth selected via {@code --plugin-revert-capture-depth}.
+ * Tracer capture depth selected via {@code --plugin-revert-capture-depth}. The three values are
+ * documented in the spec for forward compatibility:
  *
  * <ul>
- *   <li>{@link #MINIMAL}: capture only what {@code traceEndTransaction} provides.
- *   <li>{@link #STANDARD}: also hook per-opcode tracing to record contract address and call depth
- *       at the REVERT site.
- *   <li>{@link #FULL}: also maintain a call-stack snapshot via {@code traceContextEnter}/{@code
- *       traceContextExit}.
+ *   <li>{@link #MINIMAL}: end-of-transaction data only.
+ *   <li>{@link #STANDARD}: end-of-transaction plus deepest revert-site contract and call depth (the
+ *       level the current tracer captures).
+ *   <li>{@link #FULL}: standard plus a per-frame call-stack snapshot.
  * </ul>
  *
- * <p>Subsequent commits read this value to decide which {@code OperationTracer} callbacks to wire.
+ * <p>The flag is parsed and validated for spec compliance but the tracer currently uses one capture
+ * path for all three values. The path matches what {@link #STANDARD} would describe.
  */
 public enum CaptureDepth {
   MINIMAL,

@@ -8,6 +8,6 @@ class PluginRevertCategoryTest {
 
   @Test
   void getNameLowercasesEnumName() {
-    assertThat(PluginRevertCategory.PLUGIN_REVERT.getName()).isEqualTo("plugin_revert");
+    assertThat(PluginRevertCategory.REVERT.getName()).isEqualTo("revert");
   }
 }

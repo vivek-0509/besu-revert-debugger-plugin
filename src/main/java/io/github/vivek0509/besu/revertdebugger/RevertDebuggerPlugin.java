@@ -32,10 +32,6 @@ import org.slf4j.LoggerFactory;
  * plugins on its classpath, reads that file at startup. We rely on the generated form rather than a
  * hand-written SPI file because a class rename here regenerates the SPI entry automatically; a
  * hand-written file would silently go stale.
- *
- * <p>This class currently implements the lifecycle as no-ops with INFO/DEBUG log lines so the
- * plugin loads cleanly and emits visible signals for each lifecycle phase. Subsequent commits fill
- * {@link #register(ServiceManager)} and {@link #start()} with real behaviour.
  */
 @AutoService(BesuPlugin.class)
 public class RevertDebuggerPlugin implements BesuPlugin {
@@ -58,10 +54,12 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   }
 
   /**
-   * Stashes the {@link ServiceManager}, instantiates the CLI options holder, registers it with
-   * {@link PicoCLIOptions}, and registers our custom {@link PluginRevertCategory} with the {@link
-   * MetricCategoryRegistry}. Both services are required: missing either means we cannot operate, so
-   * {@code orElseThrow} is the right shape rather than a silent skip.
+   * Stashes the {@link ServiceManager}, instantiates the CLI options holder, and wires three
+   * services that must be touched during the registration phase: {@link PicoCLIOptions} for the
+   * four {@code --plugin-revert-*} flags, {@link MetricCategoryRegistry} for the {@link
+   * PluginRevertCategory#REVERT} category, and {@link RpcEndpointService} for the three {@code
+   * revert_*} JSON-RPC handlers. All three services are required; missing any of them throws and
+   * the plugin fails to register.
    */
   @Override
   public void register(final ServiceManager serviceManager) {
@@ -88,7 +86,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                         PLUGIN_NAME
                             + " requires the MetricCategoryRegistry service but it was not"
                             + " available"));
-    categoryRegistry.addMetricCategory(PluginRevertCategory.PLUGIN_REVERT);
+    categoryRegistry.addMetricCategory(PluginRevertCategory.REVERT);
 
     final RpcEndpointService rpcEndpointService =
         serviceManager

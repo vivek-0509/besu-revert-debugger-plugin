@@ -21,8 +21,8 @@ class RevertMetricsTest {
     new RevertMetrics(ms, () -> 0.0);
     verify(ms)
         .createLabelledCounter(
-            eq(PluginRevertCategory.PLUGIN_REVERT),
-            eq("revert_count_total"),
+            eq(PluginRevertCategory.REVERT),
+            eq("count_total"),
             anyString(),
             eq("contract"),
             eq("reason_format"));
@@ -34,10 +34,7 @@ class RevertMetricsTest {
     new RevertMetrics(ms, () -> 0.0);
     verify(ms)
         .createLabelledCounter(
-            eq(PluginRevertCategory.PLUGIN_REVERT),
-            eq("revert_gas_used_total"),
-            anyString(),
-            eq("contract"));
+            eq(PluginRevertCategory.REVERT), eq("gas_used_total"), anyString(), eq("contract"));
   }
 
   @Test
@@ -47,10 +44,7 @@ class RevertMetricsTest {
     new RevertMetrics(ms, supplier);
     verify(ms)
         .createGauge(
-            eq(PluginRevertCategory.PLUGIN_REVERT),
-            eq("revert_buffer_depth"),
-            anyString(),
-            same(supplier));
+            eq(PluginRevertCategory.REVERT), eq("buffer_depth"), anyString(), same(supplier));
   }
 
   @Test
@@ -59,8 +53,8 @@ class RevertMetricsTest {
     new RevertMetrics(ms, () -> 0.0);
     verify(ms)
         .createHistogram(
-            eq(PluginRevertCategory.PLUGIN_REVERT),
-            eq("revert_capture_overhead_seconds"),
+            eq(PluginRevertCategory.REVERT),
+            eq("capture_overhead_seconds"),
             anyString(),
             any(double[].class));
   }

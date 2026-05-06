@@ -11,13 +11,18 @@ import java.util.function.DoubleSupplier;
 
 /**
  * Holds the four metric handles the plugin contributes under the {@link
- * PluginRevertCategory#PLUGIN_REVERT} category. Construction registers all four metrics with the
- * given {@link MetricsSystem} and stashes the three writeable handles (the gauge is polled by
- * Besu's metrics system, so no handle is needed for it).
+ * PluginRevertCategory#REVERT} category. Construction registers all four metrics with the given
+ * {@link MetricsSystem} and stashes the three writeable handles (the gauge is polled by Besu's
+ * metrics system, so no handle is needed for it).
+ *
+ * <p>The metric short names ({@code count_total}, {@code gas_used_total}, {@code buffer_depth},
+ * {@code capture_overhead_seconds}) deliberately do not embed the {@code plugin_revert_} prefix;
+ * Besu's {@code CategorizedPrometheusCollector} prepends {@code applicationPrefix + categoryName +
+ * "_"} at registration time, so the rendered Prometheus names are {@code plugin_revert_*}.
  *
  * <p>The {@code bufferDepthSupplier} is held by Besu's metrics system and called on every
- * Prometheus scrape. Until commit 7 introduces the ring buffer, callers pass a placeholder supplier
- * that returns 0; once the buffer exists, callers swap in {@code ringBuffer::size}.
+ * Prometheus scrape. Callers pass {@code ringBuffer::size} so the gauge reports the live record
+ * count.
  */
 public class RevertMetrics {
 
@@ -33,49 +38,38 @@ public class RevertMetrics {
       final MetricsSystem metricsSystem, final DoubleSupplier bufferDepthSupplier) {
     this.revertCount =
         metricsSystem.createLabelledCounter(
-            PluginRevertCategory.PLUGIN_REVERT,
-            "revert_count_total",
+            PluginRevertCategory.REVERT,
+            "count_total",
             "Total reverted transactions captured by the RevertDebugger plugin",
             "contract",
             "reason_format");
 
     this.revertGasUsed =
         metricsSystem.createLabelledCounter(
-            PluginRevertCategory.PLUGIN_REVERT,
-            "revert_gas_used_total",
+            PluginRevertCategory.REVERT,
+            "gas_used_total",
             "Total gas used by reverted transactions captured by the RevertDebugger plugin",
             "contract");
 
     this.captureOverhead =
         metricsSystem.createHistogram(
-            PluginRevertCategory.PLUGIN_REVERT,
-            "revert_capture_overhead_seconds",
+            PluginRevertCategory.REVERT,
+            "capture_overhead_seconds",
             "Tracer capture overhead in seconds",
             OVERHEAD_BUCKETS_SECONDS);
 
     metricsSystem.createGauge(
-        PluginRevertCategory.PLUGIN_REVERT,
-        "revert_buffer_depth",
+        PluginRevertCategory.REVERT,
+        "buffer_depth",
         "Current depth of the in-memory ring buffer of captured revert records",
         bufferDepthSupplier);
   }
 
-  public LabelledMetric<Counter> revertCount() {
-    return revertCount;
-  }
-
-  public LabelledMetric<Counter> revertGasUsed() {
-    return revertGasUsed;
-  }
-
-  public Histogram captureOverhead() {
-    return captureOverhead;
-  }
-
   /**
-   * Records a single captured revert: increments {@code revert_count_total} labelled with the
-   * contract and reason format, and adds {@code gasUsed} to {@code revert_gas_used_total} labelled
-   * with the contract.
+   * Records a single captured revert: increments the {@code count_total} counter labelled with the
+   * contract and reason format, and adds {@code gasUsed} to the {@code gas_used_total} counter
+   * labelled with the contract. Rendered Prometheus names are {@code plugin_revert_count_total} and
+   * {@code plugin_revert_gas_used_total} respectively.
    */
   public void recordRevert(
       final String contract, final RevertReasonFormat format, final long gasUsed) {

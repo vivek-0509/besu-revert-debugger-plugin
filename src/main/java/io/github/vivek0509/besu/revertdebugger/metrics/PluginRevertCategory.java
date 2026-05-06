@@ -8,14 +8,15 @@ import java.util.Optional;
 /**
  * Custom {@link MetricCategory} the plugin registers with Besu's metrics system.
  *
- * <p>Single-value enum because we contribute exactly one category. The category name (used by
- * {@code --metrics-category=PLUGIN_REVERT} and in Besu logs) is the lowercased enum name. The
- * application prefix is concatenated by Besu's metrics system before each metric name we create in
- * subsequent commits, so a metric named {@code revert_count_total} is rendered to Prometheus as
- * {@code plugin_revert_count_total}.
+ * <p>Single-value enum because we contribute exactly one category. The CLI flag {@code
+ * --metrics-category=REVERT} matches against the uppercased {@link #getName()} value. Besu's
+ * metrics system composes the rendered Prometheus name as {@code applicationPrefix + getName() +
+ * "_" + metricName}, so a metric named {@code count_total} under this category is rendered as
+ * {@code plugin_revert_count_total}. The category name and metric names must therefore not embed
+ * the application prefix; doing so produces a doubled prefix in the rendered name.
  */
 public enum PluginRevertCategory implements MetricCategory {
-  PLUGIN_REVERT;
+  REVERT;
 
   @Override
   public String getName() {

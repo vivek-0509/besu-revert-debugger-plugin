@@ -16,9 +16,10 @@ import java.util.Optional;
  * java.util.concurrent.locks.ReadWriteLock} or hash-index for O(1) lookup is not justified at these
  * rates and would expand the concurrency surface.
  *
- * <p>Iterators returned by {@link #recent(int)} and the result of {@link #findByTxHash(String)} are
- * independent copies, so callers can read them after the lock has been released without worrying
- * about concurrent modification.
+ * <p>{@link #recent(int)} returns a freshly allocated {@link List}; {@link #findByTxHash(String)}
+ * returns an {@link Optional} wrapping a stored {@link RevertRecord}. Both are safe to read after
+ * the lock is released because {@code RevertRecord} is an immutable Java record, so the reference
+ * cannot observe concurrent modification.
  */
 public class RingBuffer {
 

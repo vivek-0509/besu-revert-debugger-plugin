@@ -20,7 +20,7 @@ The plugin distribution is produced at `build/distributions/besu-revert-debugger
 unzip -j build/distributions/besu-revert-debugger-plugin-0.1.0.zip -d $BESU_HOME/plugins/
 ```
 
-Then start Besu with `--metrics-category=PLUGIN_REVERT` enabled if you want the metrics scraped.
+Then start Besu with `--metrics-category=REVERT` enabled if you want the metrics scraped.
 
 ## CLI flags
 
@@ -109,7 +109,7 @@ curl -X POST -H "Content-Type: application/json" \
 
 ## Prometheus metrics
 
-Registered under the metric category `PLUGIN_REVERT` with prefix `plugin_`. Enable with `--metrics-category=PLUGIN_REVERT`.
+Registered under the metric category `REVERT` with application prefix `plugin_`. Enable scrape exposure with `--metrics-category=REVERT`. Besu composes the rendered Prometheus name as `applicationPrefix + categoryName + "_" + metricShortName`, so the table below shows the rendered names.
 
 | Metric | Type | Labels | Description |
 |---|---|---|---|

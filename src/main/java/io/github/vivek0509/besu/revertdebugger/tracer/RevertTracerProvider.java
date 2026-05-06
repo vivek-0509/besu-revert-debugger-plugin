@@ -15,15 +15,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * Factory for {@link RevertTracer} instances. Besu calls {@link #getBlockImportTracer(BlockHeader)}
- * once per imported block; we hand back either a fresh tracer (when {@code --plugin-revert-enabled}
- * is true) or {@link BlockAwareOperationTracer#NO_TRACING} (otherwise). Returning the no-op tracer
- * rather than registering nothing keeps Besu's tracing machinery happy in both states.
+ * Factory for {@link RevertTracer} instances. Besu invokes {@link
+ * #getBlockImportTracer(BlockHeader)} during block-import processing; we return a fresh tracer when
+ * {@code --plugin-revert-enabled} is true, otherwise {@link BlockAwareOperationTracer#NO_TRACING}.
+ * Returning the no-op tracer rather than registering nothing keeps Besu's tracing machinery happy
+ * in both states. Some consensus paths (observed in QBFT) invoke this method more than once per
+ * block, producing two tracer instances per block; cross-instance dedup lives in {@link
+ * RingBuffer#add}.
  *
  * <p>The contract allow-list lives here in an {@link AtomicReference}, not in the tracer, so a
- * subsequent hot-reload can swap it without rebuilding the provider. Each tracer holds a {@link
- * java.util.function.Supplier} that reads the AtomicReference at capture time, so a reload mid-
- * block is observed at the very next revert.
+ * hot-reload can swap it without rebuilding the provider. Each tracer holds a {@link
+ * java.util.function.Supplier} that reads the AtomicReference at capture time, so a reload
+ * mid-block is observed at the very next revert.
  *
  * <p>Note that {@code ServiceManager.addService} stores at most one provider per service type, so
  * if another plugin also registers a {@link BlockImportTracerProvider} the later registration wins.

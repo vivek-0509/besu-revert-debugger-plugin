@@ -57,7 +57,7 @@ class RevertDebuggerPluginTest {
 
     plugin.register(services);
 
-    assertThat(registry.addedCategory).isEqualTo(PluginRevertCategory.PLUGIN_REVERT);
+    assertThat(registry.addedCategory).isEqualTo(PluginRevertCategory.REVERT);
   }
 
   @Test
@@ -156,8 +156,8 @@ class RevertDebuggerPluginTest {
 
     verify(metricsSystem)
         .createLabelledCounter(
-            eq(PluginRevertCategory.PLUGIN_REVERT),
-            eq("revert_count_total"),
+            eq(PluginRevertCategory.REVERT),
+            eq("count_total"),
             anyString(),
             eq("contract"),
             eq("reason_format"));
@@ -177,8 +177,8 @@ class RevertDebuggerPluginTest {
         ArgumentCaptor.forClass(DoubleSupplier.class);
     verify(metricsSystem)
         .createGauge(
-            eq(PluginRevertCategory.PLUGIN_REVERT),
-            eq("revert_buffer_depth"),
+            eq(PluginRevertCategory.REVERT),
+            eq("buffer_depth"),
             anyString(),
             supplierCaptor.capture());
 
