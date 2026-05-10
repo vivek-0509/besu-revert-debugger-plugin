@@ -31,7 +31,6 @@ All flags are registered under the `--plugin-revert-*` prefix.
 | `--plugin-revert-enabled` | `true` | Master toggle. When `false`, the tracer becomes a no-op and no records are captured. |
 | `--plugin-revert-buffer-size` | `10000` | In-memory ring buffer capacity. Once full, the oldest record is evicted on each new capture. |
 | `--plugin-revert-contracts` | `""` | Comma-separated contract addresses to capture. Empty means capture all contracts. Case-insensitive. |
-| `--plugin-revert-capture-depth` | `standard` | One of `minimal`, `standard`, `full`. Currently parsed but does not yet alter behaviour; the tracer always uses the standard-equivalent capture path. |
 
 ## JSON-RPC methods
 

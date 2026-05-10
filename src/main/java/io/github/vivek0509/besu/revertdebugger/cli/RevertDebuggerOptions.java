@@ -5,11 +5,11 @@ import java.util.List;
 import picocli.CommandLine.Option;
 
 /**
- * Picocli mixin holding the four {@code --plugin-revert-*} CLI flags. The plugin passes this object
- * to {@code PicoCLIOptions.addPicoCLIOptions("revert", this)}; Besu prepends {@code --plugin-} to
- * the namespace string, producing the {@code --plugin-revert-} prefix that every field below uses.
- * The class is values-only with no logic, so option parsing is unit-testable without instantiating
- * the plugin.
+ * Picocli mixin holding the three {@code --plugin-revert-*} CLI flags. The plugin passes this
+ * object to {@code PicoCLIOptions.addPicoCLIOptions("revert", this)}; Besu prepends {@code
+ * --plugin-} to the namespace string, producing the {@code --plugin-revert-} prefix that every
+ * field below uses. The class is values-only with no logic, so option parsing is unit-testable
+ * without instantiating the plugin.
  */
 public class RevertDebuggerOptions {
 
@@ -36,14 +36,6 @@ public class RevertDebuggerOptions {
       split = ",")
   private List<String> contracts = List.of();
 
-  @Option(
-      names = "--plugin-revert-capture-depth",
-      description = "Tracer capture depth: minimal | standard | full (default: ${DEFAULT-VALUE})",
-      defaultValue = "standard",
-      converter = CaptureDepth.PicocliConverter.class,
-      paramLabel = "<minimal|standard|full>")
-  private CaptureDepth captureDepth = CaptureDepth.STANDARD;
-
   public boolean isEnabled() {
     return enabled;
   }
@@ -54,9 +46,5 @@ public class RevertDebuggerOptions {
 
   public List<String> getContracts() {
     return contracts;
-  }
-
-  public CaptureDepth getCaptureDepth() {
-    return captureDepth;
   }
 }

@@ -44,9 +44,6 @@ import org.apache.tuweni.bytes.Bytes;
  * instance; the {@code capturedTxHashes} set catches that. Some paths instantiate two separate
  * tracers per block; the ring buffer's own txHash check (see {@link RingBuffer#add}) catches the
  * cross-instance case.
- *
- * <p>The {@code --plugin-revert-capture-depth} flag is parsed but does not yet alter behaviour; the
- * tracer always uses the same standard-equivalent capture path regardless of the flag value.
  */
 public class RevertTracer implements BlockAwareOperationTracer {
 
