@@ -117,12 +117,6 @@ Registered under the metric category `REVERT` with application prefix `plugin_`.
 | `plugin_revert_buffer_depth` | gauge | none | Current depth of the in-memory ring buffer. |
 | `plugin_revert_capture_overhead_seconds` | histogram | none | Tracer capture overhead per record, in seconds. Buckets: 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05. |
 
-## Hot-reload
-
-The plugin honours Besu's `BesuPlugin.reloadConfiguration` lifecycle hook. When triggered, it re-reads the `--plugin-revert-contracts` allow-list and atomically swaps it on the tracer provider. In-flight blocks observe the new list at the very next captured revert.
-
-Note: in this v0, the option holder field is set once at CLI parse time and not mutated afterwards, so triggering reload today produces no behavioural change. The wiring is in place for a future input mechanism (config file, environment variable, or operator-side reflection) to mutate the field.
-
 ## Out of scope
 
 The plugin is deliberately scoped to in-memory capture and standard-format decoding. Out of scope:

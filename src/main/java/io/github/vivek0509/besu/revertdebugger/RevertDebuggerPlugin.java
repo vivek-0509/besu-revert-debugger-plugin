@@ -17,8 +17,6 @@ import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
 
-import java.util.concurrent.CompletableFuture;
-
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +54,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   /**
    * Stashes the {@link ServiceManager}, instantiates the CLI options holder, and wires three
    * services that must be touched during the registration phase: {@link PicoCLIOptions} for the
-   * four {@code --plugin-revert-*} flags, {@link MetricCategoryRegistry} for the {@link
+   * three {@code --plugin-revert-*} flags, {@link MetricCategoryRegistry} for the {@link
    * PluginRevertCategory#REVERT} category, and {@link RpcEndpointService} for the three {@code
    * revert_*} JSON-RPC handlers. All three services are required; missing any of them throws and
    * the plugin fails to register.
@@ -104,11 +102,6 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   }
 
   @Override
-  public void beforeExternalServices() {
-    LOG.debug("{} beforeExternalServices", PLUGIN_NAME);
-  }
-
-  @Override
   public void start() {
     LOG.info("{} starting", PLUGIN_NAME);
 
@@ -125,28 +118,6 @@ public class RevertDebuggerPlugin implements BesuPlugin {
     this.metrics = new RevertMetrics(metricsSystem, ringBuffer::size);
     this.tracerProvider = new RevertTracerProvider(ringBuffer, metrics, options);
     serviceManager.addService(BlockImportTracerProvider.class, tracerProvider);
-  }
-
-  @Override
-  public void afterExternalServicePostMainLoop() {
-    LOG.debug("{} afterExternalServicePostMainLoop", PLUGIN_NAME);
-  }
-
-  /**
-   * Re-reads the contract allow-list from the options holder and atomically swaps it on the tracer
-   * provider. Buffer size, capture depth, and the master enable flag are not reloaded: the enable
-   * flag is already polled per-block by the provider, and the others would require rebuilding the
-   * ring buffer (losing captured records).
-   */
-  @Override
-  public CompletableFuture<Void> reloadConfiguration() {
-    if (tracerProvider == null) {
-      LOG.warn("{} reloadConfiguration called before start; ignoring", PLUGIN_NAME);
-      return CompletableFuture.completedFuture(null);
-    }
-    LOG.info("{} reloading contract allow-list", PLUGIN_NAME);
-    tracerProvider.setContractAllowList(options.getContracts());
-    return CompletableFuture.completedFuture(null);
   }
 
   @Override
