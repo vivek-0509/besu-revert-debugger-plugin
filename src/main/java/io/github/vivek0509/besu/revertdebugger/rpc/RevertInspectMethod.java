@@ -5,6 +5,7 @@ import io.github.vivek0509.besu.revertdebugger.capture.RingBuffer;
 
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
+import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
@@ -32,7 +33,7 @@ public class RevertInspectMethod {
     if (params[0] == null) {
       throw new IllegalArgumentException("revert_inspect: txHash cannot be null");
     }
-    final String txHash = params[0].toString();
+    final String txHash = params[0].toString().toLowerCase(Locale.ROOT);
     return ringBufferSupplier.get().findByTxHash(txHash).orElse(null);
   }
 }

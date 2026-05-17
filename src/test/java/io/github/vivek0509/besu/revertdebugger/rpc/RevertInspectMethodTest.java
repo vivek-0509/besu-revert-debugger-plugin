@@ -77,6 +77,18 @@ class RevertInspectMethodTest {
   }
 
   @Test
+  void txHashLookupIsCaseInsensitive() {
+    final RingBuffer buffer = new RingBuffer(10);
+    buffer.add(recordWithHash(TX_HASH));
+    final RevertInspectMethod method = new RevertInspectMethod(() -> buffer);
+
+    final RevertRecord result = method.execute(requestWithParams(TX_HASH.toUpperCase()));
+
+    assertThat(result).isNotNull();
+    assertThat(result.txHash()).isEqualTo(TX_HASH);
+  }
+
+  @Test
   void throwsOnNullFirstParam() {
     final RevertInspectMethod method = new RevertInspectMethod(() -> new RingBuffer(10));
     assertThatThrownBy(() -> method.execute(requestWithParams((Object) null)))
