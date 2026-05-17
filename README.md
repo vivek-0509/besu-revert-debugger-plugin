@@ -129,13 +129,21 @@ The plugin is deliberately scoped to in-memory capture and standard-format decod
 
 Custom errors and bare `revert()` calls are tagged `Unknown` with `rawRevertBytes` preserved; downstream tooling can decode them externally.
 
-## Plugin API services consumed
+## Plugin API surface
 
-Six services from `org.hyperledger.besu.plugin.services`:
+The plugin touches six Plugin API surfaces.
 
-- `BlockImportTracerProvider`: registered via `ServiceManager.addService`. The plugin's tracer becomes Besu's default block-import tracer.
-- `RpcEndpointService`: used during `register()` to wire the three `revert_*` methods.
-- `MetricsSystem`: used during `start()` to create the four metric handles.
-- `MetricCategoryRegistry`: used during `register()` to register the `REVERT` category.
-- `PicoCLIOptions`: used during `register()` to add the three CLI flags.
-- `BesuConfiguration`: currently not consumed in v0; reserved for future use (e.g. resolving the data-directory location).
+Consumed (looked up via `ServiceManager.getService` during the plugin's lifecycle):
+
+- `PicoCLIOptions`: used during `register()` to add the three `--plugin-revert-*` CLI flags.
+- `MetricCategoryRegistry`: used during `register()` to register the custom `REVERT` metric category.
+- `RpcEndpointService`: used during `register()` to wire the three `revert_*` JSON-RPC methods.
+- `MetricsSystem`: used during `start()` to create the four metric handles (two counters, one gauge, one histogram).
+
+Published (an implementation we register so Besu uses it):
+
+- `BlockImportTracerProvider`: registered via `ServiceManager.addService` during `start()`. The plugin's `RevertTracerProvider` becomes Besu's block-import tracer source.
+
+Lifecycle entry point:
+
+- `ServiceManager`: received as the parameter to `register(...)`. Stashed in a field and used throughout for `getService` and `addService` calls; the dispatcher through which every other Plugin API surface above is reached.
