@@ -37,8 +37,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(RevertDebuggerPlugin.class);
   private static final String PLUGIN_NAME = "RevertDebugger";
 
-  private static final String CLI_NAMESPACE = "revert";
-  private static final String RPC_NAMESPACE = "revert";
+  private static final String NAMESPACE = "revert";
 
   private ServiceManager serviceManager;
   private RevertDebuggerOptions options;
@@ -73,7 +72,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                     new IllegalStateException(
                         PLUGIN_NAME
                             + " requires the PicoCLIOptions service but it was not available"));
-    picoCliOptions.addPicoCLIOptions(CLI_NAMESPACE, options);
+    picoCliOptions.addPicoCLIOptions(NAMESPACE, options);
 
     final MetricCategoryRegistry categoryRegistry =
         serviceManager
@@ -94,11 +93,11 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                     new IllegalStateException(
                         PLUGIN_NAME + " requires the RpcEndpointService but it was not available"));
     rpcEndpointService.registerRPCEndpoint(
-        RPC_NAMESPACE, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
+        NAMESPACE, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
     rpcEndpointService.registerRPCEndpoint(
-        RPC_NAMESPACE, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
+        NAMESPACE, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
     rpcEndpointService.registerRPCEndpoint(
-        RPC_NAMESPACE, "stats", new RevertStatsMethod(() -> ringBuffer)::execute);
+        NAMESPACE, "stats", new RevertStatsMethod(() -> ringBuffer)::execute);
   }
 
   @Override
