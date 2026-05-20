@@ -143,6 +143,21 @@ class RevertDebuggerPluginTest {
   }
 
   @Test
+  void rpcRegistrationFailureWrapsWithPluginContext() {
+    final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
+    final ServiceManager services = new ServiceManager.SimpleServiceManager();
+    services.addService(PicoCLIOptions.class, new RecordingPicoCLIOptions());
+    services.addService(MetricCategoryRegistry.class, new RecordingMetricCategoryRegistry());
+    services.addService(RpcEndpointService.class, new ThrowingRpcEndpointService());
+
+    assertThatThrownBy(() -> plugin.register(services))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("RevertDebugger")
+        .hasMessageContaining("revert_inspect")
+        .hasCauseInstanceOf(RuntimeException.class);
+  }
+
+  @Test
   void startCreatesRevertMetricsAgainstMetricsSystem() {
     final RevertDebuggerPlugin plugin = new RevertDebuggerPlugin();
     final ServiceManager services = serviceManagerWithRegisterFakes();
@@ -268,5 +283,20 @@ class RevertDebuggerPluginTest {
 
     record Registration(
         String namespace, String functionName, Function<PluginRpcRequest, ?> function) {}
+  }
+
+  private static final class ThrowingRpcEndpointService implements RpcEndpointService {
+    @Override
+    public <T> void registerRPCEndpoint(
+        final String namespace,
+        final String functionName,
+        final Function<PluginRpcRequest, T> function) {
+      throw new RuntimeException("simulated rejection of " + namespace + "_" + functionName);
+    }
+
+    @Override
+    public PluginRpcResponse call(final String methodName, final Object[] params) {
+      return null;
+    }
   }
 }

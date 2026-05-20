@@ -16,6 +16,9 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
+
+import java.util.function.Function;
 
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
@@ -92,12 +95,21 @@ public class RevertDebuggerPlugin implements BesuPlugin {
                 () ->
                     new IllegalStateException(
                         PLUGIN_NAME + " requires the RpcEndpointService but it was not available"));
-    rpcEndpointService.registerRPCEndpoint(
-        NAMESPACE, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
-    rpcEndpointService.registerRPCEndpoint(
-        NAMESPACE, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
-    rpcEndpointService.registerRPCEndpoint(
-        NAMESPACE, "stats", new RevertStatsMethod(() -> ringBuffer)::execute);
+    registerRpc(rpcEndpointService, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
+    registerRpc(rpcEndpointService, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
+    registerRpc(rpcEndpointService, "stats", new RevertStatsMethod(() -> ringBuffer)::execute);
+  }
+
+  private <T> void registerRpc(
+      final RpcEndpointService service,
+      final String functionName,
+      final Function<PluginRpcRequest, T> handler) {
+    try {
+      service.registerRPCEndpoint(NAMESPACE, functionName, handler);
+    } catch (final RuntimeException e) {
+      throw new IllegalStateException(
+          PLUGIN_NAME + " failed to register RPC endpoint " + NAMESPACE + "_" + functionName, e);
+    }
   }
 
   @Override
