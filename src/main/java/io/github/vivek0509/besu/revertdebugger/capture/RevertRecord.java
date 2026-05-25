@@ -3,18 +3,8 @@ package io.github.vivek0509.besu.revertdebugger.capture;
 import io.github.vivek0509.besu.revertdebugger.decode.RevertReasonFormat;
 
 /**
- * One captured EVM transaction revert. Component order matches the spec's JSON shape so Jackson's
- * default serialization (which respects record declaration order) produces the wire format
- * directly.
- *
- * <p>Hex-encoded fields are typed as {@link String} rather than Besu's {@code Hash} or {@code
- * Address}: the producer (the tracer) converts at capture time, and consumers (the JSON-RPC
- * methods) want hex strings on the wire anyway. Keeping the data class plugin-api-free also means
- * Jackson needs no custom serializers.
- *
- * <p>{@code decodedReason} is nullable: it carries a human-readable string when {@code
- * reasonFormat} is {@link RevertReasonFormat#ERROR_STRING} or {@link
- * RevertReasonFormat#PANIC_UINT256}, and {@code null} when {@link RevertReasonFormat#UNKNOWN}.
+ * One captured EVM transaction revert. {@code decodedReason} is null when {@code reasonFormat} is
+ * {@link RevertReasonFormat#UNKNOWN}.
  */
 public record RevertRecord(
     String txHash,

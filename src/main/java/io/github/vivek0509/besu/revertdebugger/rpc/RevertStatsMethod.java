@@ -12,13 +12,11 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 /**
- * Handler for {@code revert_stats}. Aggregates captured reverts whose timestamp falls within the
- * window {@code [now - windowSeconds, now]} into a {@link Stats} record. Map keys are contract
- * addresses for {@code perContract} and reason format display names for {@code perReasonFormat}.
+ * Handler for {@code revert_stats}. Aggregates captured reverts whose timestamp falls within {@code
+ * [now - windowSeconds, now]}.
  */
 public class RevertStatsMethod {
 
-  /** Aggregate result. Returned to the JSON-RPC client as a JSON object via Jackson. */
   public record Stats(
       Map<String, Long> perContract, Map<String, Long> perReasonFormat, long total) {}
 

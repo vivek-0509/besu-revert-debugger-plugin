@@ -24,16 +24,7 @@ import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Entry point for the RevertDebugger Besu plugin.
- *
- * <p>The {@code @AutoService} annotation triggers an annotation processor at compile time that
- * generates {@code META-INF/services/org.hyperledger.besu.plugin.BesuPlugin} containing this
- * class's fully qualified name. Java's {@link java.util.ServiceLoader}, which Besu uses to discover
- * plugins on its classpath, reads that file at startup. We rely on the generated form rather than a
- * hand-written SPI file because a class rename here regenerates the SPI entry automatically; a
- * hand-written file would silently go stale.
- */
+/** Entry point for the RevertDebugger Besu plugin. */
 @AutoService(BesuPlugin.class)
 public class RevertDebuggerPlugin implements BesuPlugin {
 
@@ -53,14 +44,6 @@ public class RevertDebuggerPlugin implements BesuPlugin {
     return PLUGIN_NAME;
   }
 
-  /**
-   * Stashes the {@link ServiceManager}, instantiates the CLI options holder, and wires three
-   * services that must be touched during the registration phase: {@link PicoCLIOptions} for the
-   * three {@code --plugin-revert-*} flags, {@link MetricCategoryRegistry} for the {@link
-   * PluginRevertCategory#REVERT} category, and {@link RpcEndpointService} for the three {@code
-   * revert_*} JSON-RPC handlers. All three services are required; missing any of them throws and
-   * the plugin fails to register.
-   */
   @Override
   public void register(final ServiceManager serviceManager) {
     LOG.info("{} registering", PLUGIN_NAME);

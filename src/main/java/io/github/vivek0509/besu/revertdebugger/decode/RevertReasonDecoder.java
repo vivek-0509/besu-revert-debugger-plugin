@@ -7,19 +7,9 @@ import java.util.Map;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * Stateless decoder for Solidity's two well-known revert payload formats.
- *
- * <ul>
- *   <li>{@code Error(string)}: selector {@code 0x08c379a0}, ABI-encoded payload {@code [offset =
- *       0x20][length][N bytes UTF-8 string padded to 32]}.
- *   <li>{@code Panic(uint256)}: selector {@code 0x4e487b71}, payload {@code [32-byte uint256]}.
- * </ul>
- *
- * <p>Anything else, including custom errors and bare {@code revert()} calls, is tagged {@link
- * RevertReasonFormat#UNKNOWN}; the raw bytes survive elsewhere on the {@code RevertRecord} for
- * downstream tooling. The decoder never throws: malformed inputs map to {@code UNKNOWN} too,
- * because this method runs on the block-import hot path and exceptions would just push the recovery
- * decision into the caller without changing what the wire output looks like.
+ * Stateless decoder for Solidity's two well-known revert payload formats: {@code Error(string)}
+ * (selector {@code 0x08c379a0}) and {@code Panic(uint256)} (selector {@code 0x4e487b71}). Anything
+ * else maps to {@link RevertReasonFormat#UNKNOWN}.
  */
 public final class RevertReasonDecoder {
 
@@ -44,16 +34,10 @@ public final class RevertReasonDecoder {
 
   private RevertReasonDecoder() {}
 
-  /**
-   * Decoder result. {@code reason} is null when {@code format} is {@link
-   * RevertReasonFormat#UNKNOWN}.
-   */
+  /** {@code reason} is null when {@code format} is {@link RevertReasonFormat#UNKNOWN}. */
   public record Decoded(RevertReasonFormat format, String reason) {}
 
-  /**
-   * Decodes a revert payload into a tagged reason. Never throws: malformed inputs return {@link
-   * RevertReasonFormat#UNKNOWN}.
-   */
+  /** Never throws. Malformed inputs return {@link RevertReasonFormat#UNKNOWN}. */
   public static Decoded decode(final Bytes revertBytes) {
     if (revertBytes == null || revertBytes.size() < 4) {
       return unknown();

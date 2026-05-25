@@ -14,24 +14,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * Factory for {@link RevertTracer} instances. Besu invokes {@link
- * #getBlockImportTracer(BlockHeader)} during block-import processing; we return a fresh tracer when
- * {@code --plugin-revert-enabled} is true, otherwise {@link BlockAwareOperationTracer#NO_TRACING}.
- * Returning the no-op tracer rather than registering nothing keeps Besu's tracing machinery happy
- * in both states. Some consensus paths (observed in QBFT) invoke this method more than once per
- * block, producing two tracer instances per block; cross-instance dedup lives in {@link
- * RingBuffer#add}.
- *
- * <p>The contract allow-list lives here in an {@link AtomicReference}, not in the tracer, so a
- * hot-reload can swap it without rebuilding the provider. Each tracer holds a {@link
- * java.util.function.Supplier} that reads the AtomicReference at capture time, so a reload
- * mid-block is observed at the very next revert.
- *
- * <p>Note that {@code ServiceManager.addService} stores at most one provider per service type, so
- * if another plugin also registers a {@link BlockImportTracerProvider} the later registration wins.
- * Cooperative multi-tracer composition is not solved by the plugin-api today.
- */
+/** Factory for {@link RevertTracer} instances. Holds the live contract allow-list. */
 public class RevertTracerProvider implements BlockImportTracerProvider {
 
   private final RingBuffer ringBuffer;
@@ -57,16 +40,10 @@ public class RevertTracerProvider implements BlockImportTracerProvider {
     return new RevertTracer(blockHeader, ringBuffer, metrics, contractAllowList::get);
   }
 
-  /** Hot-reload entry point. Replaces the allow-list atomically. */
   public void setContractAllowList(final List<String> contracts) {
     contractAllowList.set(normalize(contracts));
   }
 
-  /**
-   * Returns the current allow-list. Exposed for tests verifying hot-reload swaps and for any future
-   * observability code that wants to inspect the live filter without going through a tracer
-   * instance.
-   */
   public Set<String> getContractAllowList() {
     return contractAllowList.get();
   }

@@ -11,11 +11,8 @@ import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
- * Handler for {@code revert_recent}. Returns up to {@code limit} {@link RevertRecord} entries from
- * the ring buffer, newest first. The two optional positional parameters narrow the result by
- * contract address and by {@link RevertReasonFormat} display name; null, missing, or empty-string
- * positional arguments all mean "no filter" so the handler is permissive about how JSON-RPC clients
- * encode optional values.
+ * Handler for {@code revert_recent}. Returns up to {@code limit} records newest-first, optionally
+ * filtered by contract and reason format.
  */
 public class RevertRecentMethod {
 
@@ -57,7 +54,6 @@ public class RevertRecentMethod {
         .toList();
   }
 
-  /** Returns null for missing, null, or empty-string positional parameters. */
   private static String optional(final Object[] params, final int index) {
     if (index >= params.length || params[index] == null) {
       return null;

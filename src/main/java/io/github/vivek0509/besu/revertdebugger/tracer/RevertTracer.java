@@ -23,27 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Block-import tracer that detects reverts during EVM execution and assembles {@link RevertRecord}
- * entries into the ring buffer. One instance per imported block; the same instance handles every
- * transaction in the block, so per-transaction state is reset on {@link #traceStartTransaction}.
- *
- * <p>Capture happens in two phases:
- *
- * <ol>
- *   <li>{@link #traceContextExit(MessageFrame)} fires for every call frame as it exits. The first
- *       exit with {@code state == REVERT} is the deepest revert site (in a bubble chain, inner
- *       frames exit before outer ones). We record its depth and recipient address there.
- *   <li>{@link #traceEndTransaction} captures every failed transaction ({@code status == false}).
- *       The output is decoded (empty bytes decode to {@code UNKNOWN}, which is how bare {@code
- *       revert()} calls and other non-Solidity-revert failures appear), the {@link RevertRecord} is
- *       built using the captured depth and contract when {@link #traceContextExit} fired and {@code
- *       tx.getTo()} as a fallback otherwise, and metrics are updated.
- * </ol>
- *
- * <p>Two layers of dedup protect against Besu calling end-of-tx more than once per transaction.
- * Some consensus paths (observed in QBFT block import) invoke the hook twice on the same tracer
- * instance; the {@code capturedTxHashes} set catches that. Some paths instantiate two separate
- * tracers per block; the ring buffer's own txHash check (see {@link RingBuffer#add}) catches the
- * cross-instance case.
+ * entries into the ring buffer. One instance per imported block.
  */
 public class RevertTracer implements BlockAwareOperationTracer {
 

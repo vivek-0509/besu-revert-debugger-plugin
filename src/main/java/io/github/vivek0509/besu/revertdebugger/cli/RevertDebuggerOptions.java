@@ -4,13 +4,7 @@ import java.util.List;
 
 import picocli.CommandLine.Option;
 
-/**
- * Picocli mixin holding the three {@code --plugin-revert-*} CLI flags. The plugin passes this
- * object to {@code PicoCLIOptions.addPicoCLIOptions("revert", this)}; Besu prepends {@code
- * --plugin-} to the namespace string, producing the {@code --plugin-revert-} prefix that every
- * field below uses. The class is values-only with no logic, so option parsing is unit-testable
- * without instantiating the plugin.
- */
+/** Picocli mixin holding the {@code --plugin-revert-*} CLI flags. */
 public class RevertDebuggerOptions {
 
   @Option(
