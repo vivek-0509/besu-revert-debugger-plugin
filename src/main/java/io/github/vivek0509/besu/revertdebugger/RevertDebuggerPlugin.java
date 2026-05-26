@@ -6,6 +6,7 @@ import io.github.vivek0509.besu.revertdebugger.metrics.PluginRevertCategory;
 import io.github.vivek0509.besu.revertdebugger.metrics.RevertMetrics;
 import io.github.vivek0509.besu.revertdebugger.rpc.RevertInspectMethod;
 import io.github.vivek0509.besu.revertdebugger.rpc.RevertRecentMethod;
+import io.github.vivek0509.besu.revertdebugger.rpc.RevertSetAllowListMethod;
 import io.github.vivek0509.besu.revertdebugger.rpc.RevertStatsMethod;
 import io.github.vivek0509.besu.revertdebugger.tracer.RevertTracerProvider;
 
@@ -81,6 +82,7 @@ public class RevertDebuggerPlugin implements BesuPlugin {
     registerRpc(rpcEndpointService, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
     registerRpc(rpcEndpointService, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
     registerRpc(rpcEndpointService, "stats", new RevertStatsMethod(() -> ringBuffer)::execute);
+    registerRpc(rpcEndpointService, "setAllowList", new RevertSetAllowListMethod(() -> tracerProvider)::execute);
   }
 
   private <T> void registerRpc(
