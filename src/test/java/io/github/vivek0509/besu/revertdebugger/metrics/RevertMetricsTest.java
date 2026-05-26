@@ -1,6 +1,5 @@
 package io.github.vivek0509.besu.revertdebugger.metrics;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -45,17 +44,5 @@ class RevertMetricsTest {
     verify(ms)
         .createGauge(
             eq(PluginRevertCategory.REVERT), eq("buffer_depth"), anyString(), same(supplier));
-  }
-
-  @Test
-  void constructorRegistersCaptureOverheadHistogramWithLatencyBuckets() {
-    final MetricsSystem ms = mock(MetricsSystem.class);
-    new RevertMetrics(ms, () -> 0.0);
-    verify(ms)
-        .createHistogram(
-            eq(PluginRevertCategory.REVERT),
-            eq("capture_overhead_seconds"),
-            anyString(),
-            any(double[].class));
   }
 }

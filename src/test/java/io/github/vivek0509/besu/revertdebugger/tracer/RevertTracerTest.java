@@ -1,7 +1,6 @@
 package io.github.vivek0509.besu.revertdebugger.tracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -251,7 +250,6 @@ class RevertTracerTest {
 
     verify(metrics)
         .recordRevert(eq(CONTRACT.toHexString()), eq(RevertReasonFormat.ERROR_STRING), eq(87_432L));
-    verify(metrics).recordCaptureOverheadSeconds(anyDouble());
   }
 
   @Test

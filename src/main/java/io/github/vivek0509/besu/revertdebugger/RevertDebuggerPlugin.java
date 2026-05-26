@@ -82,7 +82,10 @@ public class RevertDebuggerPlugin implements BesuPlugin {
     registerRpc(rpcEndpointService, "inspect", new RevertInspectMethod(() -> ringBuffer)::execute);
     registerRpc(rpcEndpointService, "recent", new RevertRecentMethod(() -> ringBuffer)::execute);
     registerRpc(rpcEndpointService, "stats", new RevertStatsMethod(() -> ringBuffer)::execute);
-    registerRpc(rpcEndpointService, "setAllowList", new RevertSetAllowListMethod(() -> tracerProvider)::execute);
+    registerRpc(
+        rpcEndpointService,
+        "setAllowList",
+        new RevertSetAllowListMethod(() -> tracerProvider)::execute);
   }
 
   private <T> void registerRpc(

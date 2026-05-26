@@ -83,8 +83,6 @@ public class RevertTracer implements BlockAwareOperationTracer {
       return;
     }
 
-    final long captureStartNanos = System.nanoTime();
-
     final Bytes revertBytes = output != null ? output : Bytes.EMPTY;
     final Decoded decoded = RevertReasonDecoder.decode(revertBytes);
 
@@ -120,6 +118,5 @@ public class RevertTracer implements BlockAwareOperationTracer {
       return;
     }
     metrics.recordRevert(contract, decoded.format(), gasUsed);
-    metrics.recordCaptureOverheadSeconds((System.nanoTime() - captureStartNanos) / 1e9);
   }
 }
